@@ -1,0 +1,53 @@
+name: Node.js CI
+
+on: 
+  # Run this workflow every time a new commit pushed to your repository
+  push：
+    branches:
+      - master
+
+jobs:
+  # Set the job key. The key is displayed as the job name
+  # when a job name is not provided
+  test:
+    # Name the Job
+    name: Test code
+    # Set the type of machine to run on
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x， 14.x]
+
+    steps:
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache Node.js modules
+        uses: actions/cache@v2
+        with:
+          # yarn cache files are stored in `~/.yarn` on Linux/macOS
+          path: ~/.yarn
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+            ${{ runner.OS }}-
+      - run: yarn install
+      - run: yarn build --if-present
+      - run: yarn test
+        env:
+          CI: true
+      steps:
+      - uses: actions/checkout@v2
+      - uses: codecov/codecov-action@v1
+        with:
+          # token: ${{ secrets.CODECOV_TOKEN }} # required for private repository
+          # file: ./coverage.xml # optional
+          # files: ./coverage1.xml,./coverage2.xml # optional
+          # flags: unittests # optional
+          # name: codecov-umbrella # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
